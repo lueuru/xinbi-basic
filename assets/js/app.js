@@ -2145,6 +2145,13 @@
     var src = $("#actSrc");
     if (src) src.textContent = "本文文字与照片据「新笔文学社」美篇原文整理（" + act.date + "），版权归原作者。";
     renderFlow(act);
+    document.addEventListener("keydown", function (e) {
+      var nav = document.getElementById("actNav");
+      if (!nav) return;
+      var as = nav.querySelectorAll("a[href*=activity]");
+      if (e.key === "ArrowLeft" && as[0]) location.href = as[0].href;
+      if (e.key === "ArrowRight" && as[as.length - 1]) location.href = as[as.length - 1].href;
+    });
     var nav = $("#actNav");
     if (nav) {
       var i0 = list.indexOf(act), prev = list[i0 - 1], next = list[i0 + 1];
@@ -2209,6 +2216,7 @@
     observeReveals();
   }
 
+  var tlFilter = "全部";
   function initTimelinePage() {
     var box = $("#tlList");
     if (!box) return;
@@ -2224,14 +2232,34 @@
     });
     function sortKey(d) { var m = String(d).match(/\d{4}(-\d{2}(-\d{2})?)?/); return m ? m[0] : String(d); }
     items.sort(function (x, y) { return sortKey(y.date).localeCompare(sortKey(x.date)); });
-    box.innerHTML = items.map(function (it) {
-      var link = it.id ? ' · <a href="activity.html?id=' + it.id + '" style="color:var(--gold)">详情</a>' : "";
-      return '<div class="tl-item' + (it.key ? " key" : "") + '">' +
-        '<span class="tl-year">' + esc(it.date) + "</span><span class='tl-tag'>" + esc(it.kind) + "</span>" +
-        '<div class="tl-body"><h3>' + esc(it.title) + "</h3><p>" + esc(it.desc || "") + link + "</p></div></div>";
-    }).join("");
-    var sub = $("#tlSub");
-    if (sub) sub.textContent = "从 1960 建校到今天的每一步 · 共 " + items.length + " 条";
+    function paint(f) {
+      var shown = items.filter(function (it) { return !f || f === "全部" || it.kind === f; });
+      box.innerHTML = shown.map(function (it) {
+        var link = it.id ? ' · <a href="activity.html?id=' + it.id + '" style="color:var(--gold)">详情</a>' : "";
+        return '<div class="tl-item' + (it.key ? " key" : "") + '">' +
+          '<span class="tl-year">' + esc(it.date) + "</span><span class='tl-tag'>" + esc(it.kind) + "</span>" +
+          '<div class="tl-body"><h3>' + esc(it.title) + "</h3><p>" + esc(it.desc || "") + link + "</p></div></div>";
+      }).join("");
+      var sub = $("#tlSub");
+      if (sub) sub.textContent = "从 1960 建校到今天的每一步 · 共 " + shown.length + " 条";
+    }
+    var chips = $("#tlChips");
+    if (chips) {
+      var kinds = ["全部", "沿革", "活动", "荣誉"];
+      chips.innerHTML = kinds.map(function (k) {
+        var n = k === "全部" ? items.length : items.filter(function (it) { return it.kind === k; }).length;
+        return '<a class="tag-chip' + (k === tlFilter ? " on" : "") + '" href="#">' + k + "<em>" + n + "</em></a>";
+      }).join("");
+      $$("#tlChips .tag-chip").forEach(function (a) {
+        a.addEventListener("click", function (e) {
+          e.preventDefault();
+          tlFilter = a.textContent.replace(/[0-9]/g, "").trim();
+          paint(tlFilter);
+          $$("#tlChips .tag-chip").forEach(function (x) { x.classList.toggle("on", x === a); });
+        });
+      });
+    }
+    paint(tlFilter);
   }
 
   function initTagsPage() {
@@ -2375,6 +2403,48 @@
     }).join("");
   }
 
+
+  /* v6.4 现场掠影轮播 */
+  function buildRot() {
+    var box = $("#rotBox");
+    if (!box) return;
+    var pool = [];
+    (window.XB_ACTIVITIES || []).forEach(function (a) {
+      if ((a.photos || []).length) pool.push({ src: thumbOf(a.photos[0]), act: a });
+    });
+    if (!pool.length) { box.style.display = "none"; return; }
+    var cur = 0, timer = null;
+    box.innerHTML = pool.map(function (p2, i) {
+      return '<img class="rot-img' + (i === 0 ? " on" : "") + '" src="' + webpOf(p2.src) +
+        '" data-full="' + pic(p2.src) + '" data-fallback="' + p2.src +
+        '" onerror="this.onerror=null;this.src=this.dataset.fallback" alt="' + esc(p2.act.title) +
+        '" data-photo data-cap="' + esc(p2.act.date + " · " + p2.act.title) + '"' + (i ? ' loading="lazy"' : "") + ' style="opacity:' + (i === 0 ? 1 : 0) + '">' +
+        '<div class="rot-cap" style="opacity:' + (i === 0 ? 1 : 0) + '">' + esc(p2.act.date + " · " + p2.act.title) + "</div>";
+    }).join("") + '<div class="rot-dots">' + pool.map(function (_, i) {
+      return '<i data-i="' + i + '"' + (i === 0 ? ' class="on"' : "") + "></i>";
+    }).join("") + "</div>";
+    var imgs = box.querySelectorAll(".rot-img"), caps = box.querySelectorAll(".rot-cap"), dots = box.querySelectorAll(".rot-dots i");
+    function show(i) {
+      cur = (i + pool.length) % pool.length;
+      imgs.forEach(function (im, k) { im.style.opacity = k === cur ? 1 : 0; });
+      caps.forEach(function (cp, k) { cp.style.opacity = k === cur ? 1 : 0; });
+      dots.forEach(function (d, k) { d.classList.toggle("on", k === cur); });
+    }
+    function auto() { timer = setInterval(function () { show(cur + 1); }, 4000); }
+    dots.forEach(function (d) { d.addEventListener("click", function () { clearInterval(timer); show(+d.dataset.i); auto(); }); });
+    box.addEventListener("click", function (e) {
+      if (e.target.tagName === "IMG") { location.href = "gallery.html#meipianList"; }
+    });
+    auto();
+    if (window.XB_CLOUD && XB_CLOUD.isReady()) {
+      loadCloudData().then(function () {
+        var np = [];
+        (window.XB_ACTIVITIES || []).forEach(function (a) { if ((a.photos || []).length) np.push({ src: thumbOf(a.photos[0]), act: a }); });
+        if (np.length !== pool.length) buildRot();
+      });
+    }
+  }
+
   function renderDash() {
     var box = $("#dashGrid");
     if (!box) return;
@@ -2445,6 +2515,7 @@
       renderGalleryStrip();
       renderDash();
       renderNavCards();
+      buildRot();
       renderEvents();
       renderMembers();
       renderPortals();

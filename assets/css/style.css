@@ -2668,3 +2668,15 @@ body.dark .mbar a.on { color: var(--gold); }
 /* 搜索高亮 */
 mark { background: #f3d27a; color: #3a2c1a; border-radius: 3px; padding: 0 2px; }
 body.dark mark { background: #6b5426; color: #f3e9d8; }
+
+/* 现场掠影轮播 */
+.rot { position: relative; max-width: var(--maxw); height: clamp(260px, 44vw, 480px); margin: 0 auto; border-radius: var(--radius); overflow: hidden; background: var(--bg-2); padding: 0 24px; }
+.rot-img { position: absolute; left: 24px; right: 24px; top: 0; width: calc(100% - 48px); height: 100%; object-fit: cover; transition: opacity 1s ease; cursor: pointer; }
+.rot-cap {
+  position: absolute; left: 24px; right: 24px; bottom: 0; padding: 40px 20px 16px;
+  background: linear-gradient(transparent, rgba(0,0,0,.72)); color: #f3e9d8;
+  font-size: .88rem; letter-spacing: .04em; transition: opacity 1s ease; pointer-events: none;
+}
+.rot-dots { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 2; }
+.rot-dots i { width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,.45); cursor: pointer; transition: background .2s; }
+.rot-dots i.on { background: #fff; }

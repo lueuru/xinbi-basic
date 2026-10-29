@@ -158,6 +158,11 @@ window.XB_CLOUD = (function () {
     return await d.from("site_content").delete().eq("kind", kind).eq("slug", slug).select();
   }
 
+  async function deleteSubmission(id) {
+    var d = db(); if (!d) return { error: { message: "云端不可用" } };
+    return await d.from("submissions").delete().eq("id", id).select();
+  }
+
   async function updateSubmission(id) {
     var d = db(); if (!d) return { error: { message: "云端不可用" } };
     return await d.from("submissions").update({ read_at: new Date().toISOString() }).eq("id", id).select();
@@ -240,6 +245,7 @@ window.XB_CLOUD = (function () {
     deleteContent: deleteContent,
     submit: submit,
     updateSubmission: updateSubmission,
+    deleteSubmission: deleteSubmission,
     markInteraction: markInteraction,
     session: session,
     signIn: signIn,

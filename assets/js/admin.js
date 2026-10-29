@@ -655,9 +655,17 @@ window.XB_ADMIN = (function () {
         '<div style="font-size:.84rem;line-height:1.9;margin:6px 0">兴趣方向：' + esc(b.mInterest || "—") + "</div>" +
         '<div style="font-size:.84rem;line-height:1.9">联系：' + esc(b.mEmail || "—") + (b.mPhone ? " · " + esc(b.mPhone) : "") + "</div>" +
         '<div style="font-size:.84rem;line-height:1.9;color:var(--ink-2);margin-top:6px">' + esc(b.mMsg || "") + "</div>" +
-        (b.processed ? "" : '<button class="btn btn-l sm" data-slug="' + esc(r.slug) + '" style="margin-top:10px">标记已处理</button>') +
+        '<div style="margin-top:10px;display:flex;gap:8px">' +
+        (b.processed ? "" : '<button class="btn btn-l sm" data-slug="' + esc(r.slug) + '">标记已处理</button>') +
+        '<button class="btn btn-l sm" data-del="' + esc(r.slug) + '" style="color:var(--red)">删除</button></div>' +
         "</div>";
     }).join("");
+    $$("#rcRows button[data-del]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        if (!confirm("确认删除这条申请？不可恢复。")) return;
+        XB_CLOUD.deleteContent("recruit", b.dataset.del).then(function () { loadRecruits(); toast("已删除"); });
+      });
+    });
     $$("#rcRows button[data-slug]").forEach(function (b) {
       b.addEventListener("click", function () {
         var slug = b.dataset.slug;
@@ -699,9 +707,17 @@ window.XB_ADMIN = (function () {
         (done ? " · 已读" : "") + "</span></div>" +
         '<div style="font-size:.84rem;line-height:1.9;color:var(--ink-2);margin:6px 0">' + esc(r.contact || "—") + "</div>" +
         '<div style="font-size:.84rem;line-height:1.9;white-space:pre-wrap">' + esc((r.content || "").slice(0, 300)) + "</div>" +
-        (done ? "" : '<button class="btn btn-l sm" data-sid="' + esc(String(r.id)) + '" style="margin-top:10px">标记已读</button>') +
+        '<div style="margin-top:10px;display:flex;gap:8px">' +
+        (done ? "" : '<button class="btn btn-l sm" data-sid="' + esc(String(r.id)) + '">标记已读</button>') +
+        '<button class="btn btn-l sm" data-sdel="' + esc(String(r.id)) + '" style="color:var(--red)">删除</button></div>' +
         "</div>";
     }).join("");
+    $$("#sbRows button[data-sdel]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        if (!confirm("确认删除这条投稿？不可恢复。")) return;
+        XB_CLOUD.deleteSubmission(b.dataset.sdel).then(function () { loadSubs(); toast("已删除"); });
+      });
+    });
     $$("#sbRows button[data-sid]").forEach(function (b) {
       b.addEventListener("click", function () {
         var rd = LS.get("subsRead", []);
