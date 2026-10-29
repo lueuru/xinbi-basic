@@ -950,6 +950,17 @@
         '<span class="fs-ctl" role="group" aria-label="字号"><button type="button" class="fs-btn" data-fs="s">A−</button><button type="button" class="fs-btn" data-fs="m">A</button><button type="button" class="fs-btn" data-fs="l">A+</button></span>';
       on("#wkShareBtn", "click", function () { shareWork(w); });
       on("#posterBtn", "click", function () { makePoster(w); });
+      var ttsBtn = $("#ttsBtn");
+      if (ttsBtn) ttsBtn.addEventListener("click", function () {
+        var syn = window.speechSynthesis;
+        if (!syn) { toast("当前浏览器不支持朗读", "err"); return; }
+        if (syn.speaking) { syn.cancel(); ttsBtn.textContent = "🔊 朗读"; return; }
+        var u = new SpeechSynthesisUtterance((w.content || []).join("。"));
+        u.lang = "zh-CN"; u.rate = 0.95;
+        u.onend = function () { ttsBtn.textContent = "🔊 朗读"; };
+        syn.speak(u);
+        ttsBtn.textContent = "⏹ 停止朗读";
+      });
       var body0 = $("#wkBody");
       var fs = localStorage.getItem("xb_wfs") || "m";
       function applyFs(v) {
@@ -1358,6 +1369,18 @@
     }).join("");
   }
 
+  function paintCatalog(filter) {
+    var cat = $("#catalogList");
+    if (!cat) return;
+    var list = (D.site.catalog || []).filter(function (c) { return !filter || filter === "全部" || c.kind === filter; });
+    cat.innerHTML = list.map(function (c) {
+      return "<div class='toc-row'><div><span class='t'>" + esc(c.title) + "</span>" +
+        "<span class='toc-type'>" + esc(c.kind) + "</span></div>" +
+        "<div class='a'>" + esc(c.author) + "</div>" +
+        "<div class='p' style='font-size:.72rem'>" + esc(c.where) + "</div></div>";
+    }).join("");
+  }
+  var catFilter = "全部";
   function initAboutPage() {
     var rerender = function () { renderPeople(); renderBigTimeline(); var p2 = initAboutPage; };
     if (window.XB_CLOUD && XB_CLOUD.isReady()) {
@@ -1367,12 +1390,28 @@
     if (lead) lead.textContent = D.site.intro;
     var cat = $("#catalogList");
     if (cat) {
-      cat.innerHTML = (D.site.catalog || []).map(function (c) {
-        return "<div class='toc-row'><div><span class='t'>" + esc(c.title) + "</span>" +
-          "<span class='toc-type'>" + esc(c.kind) + "</span></div>" +
-          "<div class='a'>" + esc(c.author) + "</div>" +
-          "<div class='p' style='font-size:.72rem'>" + esc(c.where) + "</div></div>";
-      }).join("");
+      var kinds = [];
+      (D.site.catalog || []).forEach(function (c) { if (kinds.indexOf(c.kind) < 0 && c.kind) kinds.push(c.kind); });
+      var chips = $("#catChips");
+      if (chips) {
+        var mk = ["全部"].concat(kinds);
+        chips.innerHTML = mk.map(function (k) {
+          return '<a class="tag-chip' + (k === catFilter ? " on" : "") + '" href="#">' + esc(k) + "<em>" +
+            (k === "全部" ? (D.site.catalog || []).length : (D.site.catalog || []).filter(function (c) { return c.kind === k; }).length) + "</em></a>";
+        }).join("");
+        $$("#catChips .tag-chip").forEach(function (a) {
+          a.addEventListener("click", function (e) {
+            e.preventDefault();
+            catFilter = a.textContent.replace(/[0-9]/g, "").trim();
+            paintCatalog(catFilter);
+            $$("#catChips .tag-chip").forEach(function (x) { x.classList.toggle("on", x === a); });
+          });
+        });
+      }
+      paintCatalog(catFilter);
+      if (window.XB_CLOUD && XB_CLOUD.isReady()) {
+        loadCloudData().then(function () { paintCatalog(catFilter); });
+      }
     }
     renderIndexSections();
   }
@@ -2282,6 +2321,24 @@
     }
   }
 
+  function buildMobileBar() {
+    if (document.querySelector(".mbar") || window.innerWidth > 860) return;
+    var page = document.body.getAttribute("data-page");
+    var items = [
+      { t: "首页", h: "index.html", k: "index" },
+      { t: "作品", h: "works.html", k: "works" },
+      { t: "活动", h: "gallery.html", k: "gallery" },
+      { t: "招新", h: "join.html", k: "join" },
+      { t: "搜索", h: "search.html", k: "search" }
+    ];
+    var bar = document.createElement("nav");
+    bar.className = "mbar";
+    bar.innerHTML = items.map(function (i) {
+      return '<a href="' + i.h + '"' + (i.k === page ? ' class="on"' : "") + ">" + i.t + "</a>";
+    }).join("");
+    document.body.appendChild(bar);
+  }
+
   function buildCrumb() {
     var page = document.body.getAttribute("data-page");
     var map = { sections: "社刊版块", works: "作品库", journal: "社刊", gallery: "活动现场",
@@ -2440,6 +2497,7 @@
     if (page === "contest") initContestPage();
     buildCrumb();
     buildTOC();
+    buildMobileBar();
     if (page === "search") initSearchPage();
     if (page === "gallery") renderGallery();
     if (page === "sections") renderSections();

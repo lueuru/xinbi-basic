@@ -2645,3 +2645,26 @@ body.dark .fs-btn.on { background: var(--gold); border-color: var(--gold); color
   width: 16px; height: 16px; margin-top: 3px; accent-color: var(--red); flex: none; cursor: pointer;
 }
 .agree-line label { cursor: pointer; }
+
+/* 移动端底部导航条 */
+.mbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+  display: none; grid-template-columns: repeat(5, 1fr);
+  background: var(--card); border-top: 1px solid var(--line);
+  box-shadow: 0 -4px 16px rgba(0,0,0,.06);
+}
+.mbar a {
+  text-align: center; padding: 10px 0 12px; font-size: .78rem;
+  color: var(--ink-3); text-decoration: none; letter-spacing: .04em;
+}
+.mbar a.on { color: var(--red); font-weight: 700; }
+body.dark .mbar a.on { color: var(--gold); }
+@media (max-width: 860px) {
+  .mbar { display: grid; }
+  body { padding-bottom: 56px; }
+}
+/* 名录筛选 chips */
+#catChips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+/* 搜索高亮 */
+mark { background: #f3d27a; color: #3a2c1a; border-radius: 3px; padding: 0 2px; }
+body.dark mark { background: #6b5426; color: #f3e9d8; }
