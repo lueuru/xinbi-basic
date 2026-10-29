@@ -2216,7 +2216,7 @@
     var page = document.body.getAttribute("data-page");
     var map = { sections: "社刊版块", works: "作品库", journal: "社刊", gallery: "活动现场",
       activity: "活动档案", about: "关于我们", guide: "投稿指南", craft: "写作课",
-      reading: "书单", contest: "征文", search: "搜索", authors: "作者", work: "作品", issue: "期号", tags: "标签索引", timeline: "大事记" };
+      reading: "书单", contest: "征文", search: "搜索", authors: "作者", work: "作品", issue: "期号", tags: "标签索引", timeline: "大事记", join: "网上招新" };
     var label = map[page];
     var main = document.getElementById("main");
     if (!label || !main || document.querySelector(".crumb")) return;
@@ -2241,7 +2241,7 @@
       { t: "标签索引", d: "按体裁、年份、活动、作者交叉检索", n: "40 个标签", h: "tags.html" },
       { t: "光华杯征文", d: "清明缅怀——传承的力量", n: "1027 篇 → 90 篇", h: "contest.html" },
       { t: "投稿与指南", d: "怎么投稿、格式要求、往哪里交", n: "长期征稿", h: "guide.html" },
-      { t: "加入我们", d: "网上招新，申请直达编辑部后台", n: "常年招新", h: "index.html#memForm" }
+      { t: "加入我们", d: "网上招新：流程、条件与在线申请表", n: "常年招新", h: "join.html" }
     ];
     box.innerHTML = cards.map(function (c) {
       return '<a class="navcard" href="' + c.h + '"><b>' + esc(c.t) + "</b><span>" + esc(c.d) + "</span><em>" + esc(c.n) + "</em></a>";
@@ -2326,6 +2326,7 @@
       bindDemoToggle();
       bindForm("#subForm", "#subOk", "submissions", "投稿已提交，我们将尽快审核", "提交投稿", true);
       bindForm("#memForm", "#memOk", "applications", "申请已提交，我们将尽快与您联系", "提交申请", true);
+      bindForm("#joinForm", "#joinOk", "applications", "申请已提交，编辑部已收到，请留意联系方式", "提交申请", true);
       if (DATA.source === "local-managed") {
         setSourceBadge();
         renderWorks(true);
