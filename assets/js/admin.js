@@ -691,7 +691,7 @@ window.XB_ADMIN = (function () {
     if (!list.length) { box.innerHTML = '<p class="ad-sub">暂无投稿。访客提交后会出现在这里。</p>'; return; }
     var read = LS.get("subsRead", []);
     box.innerHTML = list.map(function (r) {
-      var done = read.indexOf(r.id) > -1;
+      var done = read.indexOf(String(r.id)) > -1 || !!r.read_at;
       return '<div style="border:1px solid var(--line-2);border-radius:8px;padding:14px;margin-bottom:12px' + (done ? ";opacity:.55" : "") + '">' +
         '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:baseline">' +
         "<b>" + esc(r.title || "无题") + '</b><span style="color:var(--ink-3);font-size:.8rem">' + esc(r.author || "") +
@@ -706,7 +706,7 @@ window.XB_ADMIN = (function () {
       b.addEventListener("click", function () {
         var rd = LS.get("subsRead", []);
         if (rd.indexOf(b.dataset.sid) < 0) { rd.push(b.dataset.sid); LS.set("subsRead", rd); }
-        renderSubs();
+        XB_CLOUD.updateSubmission(b.dataset.sid).then(function () { loadSubs(); });
       });
     });
   }

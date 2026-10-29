@@ -818,6 +818,47 @@
     });
   }
 
+  function makePoster(w) {
+    var c = document.createElement("canvas");
+    c.width = 800; c.height = 1060;
+    var x = c.getContext("2d");
+    x.fillStyle = "#f7f1e6"; x.fillRect(0, 0, 800, 1060);
+    x.fillStyle = "#8b3a3a"; x.fillRect(0, 0, 800, 10);
+    x.fillStyle = "#8b3a3a";
+    x.beginPath(); x.arc(400, 150, 62, 0, Math.PI * 2); x.fill();
+    x.fillStyle = "#f7f1e6"; x.font = "bold 44px Georgia, serif"; x.textAlign = "center";
+    x.fillText("新笔", 400, 166);
+    x.fillStyle = "#8b3a3a"; x.font = "bold 40px Georgia, 'STKaiti', serif";
+    var title = w.title || "无题";
+    var line = "", lines = [];
+    for (var i = 0; i < title.length; i++) {
+      line += title[i];
+      if (line.length >= 14) { lines.push(line); line = ""; }
+    }
+    if (line) lines.push(line);
+    var ty = 300;
+    lines.slice(0, 3).forEach(function (l) { x.fillText(l, 400, ty); ty += 58; });
+    x.fillStyle = "#6b5b4a"; x.font = "24px 'STKaiti', serif";
+    x.fillText((w.author || "") + (w.grade ? " · " + w.grade + (w.class_name || "") + "班" : ""), 400, ty + 24);
+    x.strokeStyle = "#c9b68a"; x.beginPath(); x.moveTo(180, ty + 70); x.lineTo(620, ty + 70); x.stroke();
+    x.fillStyle = "#4a4034"; x.font = "22px 'STKaiti', serif";
+    var ex = (w.excerpt || "用文字书写灵魂。").slice(0, 90);
+    var eline = "", ey = ty + 120;
+    for (var j = 0; j < ex.length; j++) {
+      eline += ex[j];
+      if (eline.length >= 22) { x.fillText(eline, 400, ey); ey += 38; eline = ""; }
+    }
+    if (eline) x.fillText(eline, 400, ey);
+    x.fillStyle = "#8b3a3a"; x.font = "bold 30px Georgia, serif";
+    x.fillText("新笔文学社", 400, 950);
+    x.fillStyle = "#9a8a76"; x.font = "18px sans-serif";
+    x.fillText("lueuru.github.io/xinbi-literature", 400, 990);
+    var a = document.createElement("a");
+    a.href = c.toDataURL("image/png");
+    a.download = "xinbi-poster.png"; a.click();
+    toast("海报已生成，已开始下载");
+  }
+
   function shareWork(w) {
     var url = location.origin + location.pathname + "?id=" + w.id;
     if (navigator.share) {
@@ -898,6 +939,7 @@
         '<button type="button" class="share-btn" id="wkShareBtn">' + icon("share") + " 分享</button>" +
         '<span class="fs-ctl" role="group" aria-label="字号"><button type="button" class="fs-btn" data-fs="s">A−</button><button type="button" class="fs-btn" data-fs="m">A</button><button type="button" class="fs-btn" data-fs="l">A+</button></span>';
       on("#wkShareBtn", "click", function () { shareWork(w); });
+      on("#posterBtn", "click", function () { makePoster(w); });
       var body0 = $("#wkBody");
       var fs = localStorage.getItem("xb_wfs") || "m";
       function applyFs(v) {
