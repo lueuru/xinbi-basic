@@ -1981,13 +1981,15 @@
     });
   }
 
+  var PIC = location.hostname === "lueuru.github.io" ? "" : "https://lueuru.github.io/xinbi-literature";
+  function pic(src) { return /^https?:/.test(String(src)) ? String(src) : PIC + "/" + String(src); }
   function webpOf(src) { return String(src).replace(/\.jpg$/, ".webp"); }
 
-  function thumbOf(src) { return src.replace("assets/photos/", "assets/photos/th/"); }
+  function thumbOf(src) { return pic(src.replace("assets/photos/", "assets/photos/th/")); }
 
   function photoCard(p, withCap) {
     return '<figure class="photo-card" data-photo data-cap="' + esc(p.cap || "") + '">' +
-      '<img src="' + webpOf(thumbOf(p.src)) + '" data-full="' + p.src + '" data-fallback="' + thumbOf(p.src) + '" onerror="this.onerror=null;this.src=this.dataset.fallback" alt="' + esc(p.cap || "") + '" loading="lazy">' +
+      '<img src="' + webpOf(thumbOf(p.src)) + '" data-full="' + pic(p.src) + '" data-fallback="' + thumbOf(p.src) + '" onerror="this.onerror=null;this.src=this.dataset.fallback" alt="' + esc(p.cap || "") + '" loading="lazy">' +
       (withCap ? '<figcaption class="photo-cap"><b>' + esc(p.cap || "") + "</b><span>" + esc(p.note || "") + "</span></figcaption>" : "") +
       "</figure>";
   }
@@ -2012,7 +2014,7 @@
         '<a class="mp-title" href="activity.html?id=' + m.url.split("/").pop() + '">' + esc(m.title) + "</a>" +
         '<a href="' + m.url + '" target="_blank" rel="noopener">原文 →</a></div>' +
         (show.length ? '<div class="mp-thumbs">' + show.map(function (src) {
-          return '<img src="' + webpOf(thumbOf(src)) + '" data-full="' + src + '" data-fallback="' + thumbOf(src) + '" onerror="this.onerror=null;this.src=this.dataset.fallback" alt="' + esc(m.title) + '" loading="lazy" data-photo data-cap="' + esc(m.date + " · " + m.title) + '">';
+          return '<img src="' + webpOf(thumbOf(src)) + '" data-full="' + pic(src) + '" data-fallback="' + thumbOf(src) + '" onerror="this.onerror=null;this.src=this.dataset.fallback" alt="' + esc(m.title) + '" loading="lazy" data-photo data-cap="' + esc(m.date + " · " + m.title) + '">';
         }).join("") + "</div>" : "") +
         (photos.length > 4 ? '<p class="mp-more">另有 ' + (photos.length - 4) + " 张，见原文</p>" : "") +
         "</div>";
@@ -2059,7 +2061,7 @@
     if (ph) {
       ph.innerHTML = act.photos.map(function (s2) {
         return '<figure class="photo-card" data-photo data-cap="' + esc(act.title) + '">' +
-          '<img src="' + webpOf(thumbOf(s2)) + '" data-full="' + s2 + '" data-fallback="' + thumbOf(s2) + '" onerror="this.onerror=null;this.src=this.dataset.fallback" alt="' + esc(act.title) + '" loading="lazy"></figure>';
+          '<img src="' + webpOf(thumbOf(s2)) + '" data-full="' + pic(s2) + '" data-fallback="' + thumbOf(s2) + '" onerror="this.onerror=null;this.src=this.dataset.fallback" alt="' + esc(act.title) + '" loading="lazy"></figure>';
       }).join("");
       bindLightbox();
     }
@@ -2388,7 +2390,21 @@
     if (page === "tags") initTagsPage();
     if (page === "timeline") initTimelinePage();
     if (page === "activity") initActivityPage();
-    if (page === "about") { renderPeople(); renderBigTimeline(); }
+    if (page === "about") {
+      renderPeople();
+      renderBigTimeline();
+      var ce = $("#catExport");
+      if (ce) ce.addEventListener("click", function (e) {
+        e.preventDefault();
+        var rows = [["标题", "作者/出处", "说明"]].concat((D.site.catalog || []).map(function (c) {
+          return [c.title || "", c.author || c.kind || "", c.where || ""];
+        }));
+        var csv = "\ufeff" + rows.map(function (r) { return r.map(function (c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(","); }).join("\n");
+        var b = new Blob([csv], { type: "text/csv" });
+        var a2 = document.createElement("a");
+        a2.href = URL.createObjectURL(b); a2.download = "xinbi-catalog.csv"; a2.click();
+      });
+    }
     if (page === "guide") initGuidePage();
     if (page === "about") initAboutPage();
     if (page === "journal") {

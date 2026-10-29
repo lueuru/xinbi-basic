@@ -88,7 +88,11 @@
       <button type="button" data-tab="members">社员</button>
       <button type="button" data-tab="acts">活动档案</button>
       <button type="button" data-tab="recruits">招新申请</button>
+      <button type="button" data-tab="subs">投稿审核</button>
+      <button type="button" data-tab="arch">档案管理</button>
       <button type="button" data-tab="recruits">招新申请</button>
+      <button type="button" data-tab="subs">投稿审核</button>
+      <button type="button" data-tab="arch">档案管理</button>
       <button type="button" data-tab="journal">社刊</button>
       <button type="button" data-tab="data">数据</button>
     </nav>
@@ -132,6 +136,29 @@
       </div>
       <p class="ad-sub" style="margin:0 0 12px">网上招新提交的申请，来自全站「加入我们」表单。</p>
       <div id="rcRows"></div>
+    </section>
+
+    <section class="ad-panel" id="tab-subs">
+      <div class="ad-toolbar">
+        <span class="ad-count" id="sbCount"></span>
+        <button class="btn btn-l sm" id="sbReload" type="button">刷新</button>
+        <button class="btn btn-l sm" id="sbExport" type="button">⬇ 导出 CSV</button>
+      </div>
+      <p class="ad-sub" style="margin:0 0 12px">游客通过「投稿」表单提交的稿件，按时间倒序。审核通过后可据此在「作品」标签中录入上架。</p>
+      <div id="sbRows"></div>
+    </section>
+
+    <section class="ad-panel" id="tab-arch">
+      <div class="ad-toolbar">
+        <button class="btn btn-d sm" id="afPeople" type="button">⬇ 导出 people.js</button>
+        <button class="btn btn-l sm" id="afCatalog" type="button">⬇ 导出名录 CSV</button>
+        <button class="btn btn-l sm" id="afSections" type="button">⬇ 导出版块 JSON</button>
+      </div>
+      <h3 style="margin:18px 0 8px">社刊版块（已证实 5 个 + 待补 6 个）</h3>
+      <div id="afSecRows"></div>
+      <h3 style="margin:18px 0 8px">人物志（13 位）</h3>
+      <div id="afPeoRows"></div>
+      <p class="ad-sub" style="margin-top:12px">编辑后点对应「导出」按钮，把下载的文件替换 assets/js 下同名文件并重新发布。</p>
     </section>
 
     <section class="ad-panel" id="tab-acts">

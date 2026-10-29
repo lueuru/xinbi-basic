@@ -87,12 +87,14 @@ window.XB_ADMIN = (function () {
         XB_CLOUD.fetchContent("event"),
         XB_CLOUD.fetchContent("member"),
         XB_CLOUD.fetchContent("issue"),
-        XB_CLOUD.fetchContent("recruit")
+        XB_CLOUD.fetchContent("recruit"),
+        XB_CLOUD.fetchSubmissions()
       ]);
     }).then(function (res) {
       var corpus = localCorpus();
       var works = res[0], events = res[1], members = res[2], issues = res[3], recruits = res[4];
       ADMIN.recruits = recruits || [];
+      ADMIN.subs = ((res[5] || []).filter(function (r) { return r.category !== "application"; })) || [];
       if (works && works.length) {
         ADMIN.works = works.map(function (row) {
           return {
@@ -532,6 +534,8 @@ window.XB_ADMIN = (function () {
     renderRecords();
     renderActs();
     renderRecruits();
+    renderSubs();
+    renderArchive();
   }
 
   function init() {
@@ -675,6 +679,96 @@ window.XB_ADMIN = (function () {
     var b = new Blob([JSON.stringify(ADMIN.recruits || [], null, 2)], { type: "application/json" });
     var a = document.createElement("a");
     a.href = URL.createObjectURL(b); a.download = "recruits.json"; a.click();
+  });
+
+
+  /* ===== 投稿审核 ===== */
+  function renderSubs() {
+    var box = $("#sbRows"), cnt = $("#sbCount");
+    if (!box) return;
+    var list = ADMIN.subs || [];
+    if (cnt) cnt.textContent = list.length + " 条";
+    if (!list.length) { box.innerHTML = '<p class="ad-sub">暂无投稿。访客提交后会出现在这里。</p>'; return; }
+    var read = LS.get("subsRead", []);
+    box.innerHTML = list.map(function (r) {
+      var done = read.indexOf(r.id) > -1;
+      return '<div style="border:1px solid var(--line-2);border-radius:8px;padding:14px;margin-bottom:12px' + (done ? ";opacity:.55" : "") + '">' +
+        '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:baseline">' +
+        "<b>" + esc(r.title || "无题") + '</b><span style="color:var(--ink-3);font-size:.8rem">' + esc(r.author || "") +
+        (r.grade ? " · " + esc(r.grade) : "") + (r.created_at ? " · " + esc(r.created_at.slice(0, 10)) : "") +
+        (done ? " · 已读" : "") + "</span></div>" +
+        '<div style="font-size:.84rem;line-height:1.9;color:var(--ink-2);margin:6px 0">' + esc(r.contact || "—") + "</div>" +
+        '<div style="font-size:.84rem;line-height:1.9;white-space:pre-wrap">' + esc((r.content || "").slice(0, 300)) + "</div>" +
+        (done ? "" : '<button class="btn btn-l sm" data-sid="' + esc(String(r.id)) + '" style="margin-top:10px">标记已读</button>') +
+        "</div>";
+    }).join("");
+    $$("#sbRows button[data-sid]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var rd = LS.get("subsRead", []);
+        if (rd.indexOf(b.dataset.sid) < 0) { rd.push(b.dataset.sid); LS.set("subsRead", rd); }
+        renderSubs();
+      });
+    });
+  }
+  function loadSubs() {
+    return XB_CLOUD.fetchSubmissions().then(function (rows) {
+      ADMIN.subs = (rows || []).filter(function (r) { return r.category !== "application"; });
+      renderSubs();
+    });
+  }
+  on("#sbReload", "click", loadSubs);
+  on("#sbExport", "click", function () {
+    var list = ADMIN.subs || [];
+    var rows = [["标题", "作者", "年级", "联系", "时间", "内容"]].concat(list.map(function (r) {
+      return [r.title || "", r.author || "", r.grade || "", r.contact || "", r.created_at || "", (r.content || "").replace(/\n/g, " ")];
+    }));
+    var csv = "\ufeff" + rows.map(function (r) { return r.map(function (c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(","); }).join("\n");
+    var b = new Blob([csv], { type: "text/csv" });
+    var a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "submissions.csv"; a.click();
+  });
+
+  /* ===== 档案管理 ===== */
+  function dl(name, text, mime) {
+    var b = new Blob([text], { type: mime || "text/plain" });
+    var a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = name; a.click();
+  }
+  function renderArchive() {
+    var box = $("#afSecRows");
+    if (!box) return;
+    var sec = D.site.sections || {};
+    box.innerHTML = '<input class="f-in" id="afVer" style="width:100%" value="' + esc((sec.verified || []).map(function (x) { return x.name; }).join("、")) + '" placeholder="已证实版块，顿号分隔">' +
+      '<input class="f-in" id="afPen" style="width:100%;margin-top:8px" value="' + esc(Array(sec.pending || 0).fill("待补").join("、")) + '" placeholder="待补版块，顿号分隔">';
+    var pbox = $("#afPeoRows");
+    if (pbox) pbox.innerHTML = (window.XB_PEOPLE || []).map(function (p2, i) {
+      return '<div style="display:flex;gap:8px;margin-bottom:8px"><input class="f-in" data-pi="' + i + '" data-pf="name" value="' + esc(p2.name) + '" style="width:110px">' +
+        '<input class="f-in" data-pi="' + i + '" data-pf="role" value="' + esc(p2.role) + '" style="width:150px">' +
+        '<input class="f-in" data-pi="' + i + '" data-pf="note" value="' + esc(p2.note) + '" style="flex:1;min-width:200px"></div>';
+    }).join("");
+    $$("#afPeoRows .f-in").forEach(function (el) {
+      el.addEventListener("change", function () {
+        var list = window.XB_PEOPLE || [];
+        list[+el.dataset.pi][el.dataset.pf] = el.value;
+        LS.set("people", list);
+      });
+    });
+  }
+  on("#afPeople", "click", function () {
+    var list = LS.get("people", null) || window.XB_PEOPLE || [];
+    dl("people.js", "window.XB_PEOPLE = " + JSON.stringify(list, null, 2) + ";\n");
+    toast("已导出 people.js，替换后重新发布生效");
+  });
+  on("#afCatalog", "click", function () {
+    var rows = [["标题", "作者/出处", "说明"]].concat((D.site.catalog || []).map(function (c) {
+      return [c.title || "", c.author || c.kind || "", c.where || ""];
+    }));
+    var csv = "\ufeff" + rows.map(function (r) { return r.map(function (c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(","); }).join("\n");
+    dl("catalog.csv", csv, "text/csv");
+  });
+  on("#afSections", "click", function () {
+    var ver = ($("#afVer") || {}).value || "";
+    var pen = ($("#afPen") || {}).value || "";
+    var out = { verified: ver.split("、").filter(Boolean).map(function (n) { return { name: n.trim(), note: "" }; }), total: 11, pending: pen.split("、").filter(Boolean).length, pendingNames: pen, source: "由后台编辑导出" };
+    dl("sections.json", JSON.stringify(out, null, 2), "application/json");
   });
 
 })();
