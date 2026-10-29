@@ -2636,3 +2636,12 @@ body.dark .navcard em { color: var(--gold); }
 .fs-btn:hover { border-color: var(--red); color: var(--red); }
 .fs-btn.on { background: var(--red); border-color: var(--red); color: #fff; }
 body.dark .fs-btn.on { background: var(--gold); border-color: var(--gold); color: #1b1611; }
+
+.agree-line {
+  display: flex; align-items: flex-start; gap: 8px;
+  font-size: 0.82rem; line-height: 1.7; color: var(--ink-2);
+}
+.agree-line input[type="checkbox"] {
+  width: 16px; height: 16px; margin-top: 3px; accent-color: var(--red); flex: none; cursor: pointer;
+}
+.agree-line label { cursor: pointer; }

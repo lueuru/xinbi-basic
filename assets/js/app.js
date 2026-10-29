@@ -696,6 +696,18 @@
     set("#copyLine", D.site.copyright + " | 基础版本 v0.2 · 本地演示");
   }
 
+  function gateAgree(formSel, chkSel) {
+    var f = $(formSel), c = $(chkSel);
+    if (!f || !c) return;
+    f.addEventListener("submit", function (e) {
+      if (!c.checked) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        toast("请先阅读并勾选「入社须知」", "err");
+      }
+    }, true);
+  }
+
   function bindForm(formSel, okSel, key, okMsg, btnLabel, toCloud) {
     var form = $(formSel);
     if (!form) return;
@@ -2326,7 +2338,9 @@
       bindDemoToggle();
       bindForm("#subForm", "#subOk", "submissions", "投稿已提交，我们将尽快审核", "提交投稿", true);
       bindForm("#memForm", "#memOk", "applications", "申请已提交，我们将尽快与您联系", "提交申请", true);
+      gateAgree("#memForm", "#mAgree");
       bindForm("#joinForm", "#joinOk", "applications", "申请已提交，编辑部已收到，请留意联系方式", "提交申请", true);
+      gateAgree("#joinForm", "#jAgree");
       if (DATA.source === "local-managed") {
         setSourceBadge();
         renderWorks(true);
