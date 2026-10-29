@@ -1334,3 +1334,10 @@ window.XB_DATA = {
     source: "版块名称据《年轻的心》社刊介绍（社团年会记录）"
   };
 })();
+
+(function () {
+  var D = window.XB_DATA;
+  D.works = (D.officialWorks || []).map(function (w) {
+    var o = {}; for (var k in w) o[k] = w[k]; o.verified = true; return o;
+  });
+})();

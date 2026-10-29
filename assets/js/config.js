@@ -1,5 +1,6 @@
 
 window.XB_CONFIG = {
+  adminEmails: [],
   cloudEnabled: true,
   cloudEndpoint: "https://xinbi-literature.app.workbuddy.host",
   publishableKey: "wbpk_kq2rA8Pw0b13ombavGOPPC_tEgImQMi7OP5rUXvWjJbrfBO63H3Ax8E",

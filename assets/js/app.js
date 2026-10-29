@@ -9,7 +9,7 @@
 
   var DATA = { works: [], source: "local", remoteTried: false, showDemo: false };
 
-  function demoMode() { return new URLSearchParams(location.search).get("demo") === "1"; }
+  function demoMode() { return false; }
 
   function buildWorks(cloudRows) {
     if (!demoMode()) return (D.officialWorks || []).map(function (w) {
@@ -710,6 +710,14 @@
         data._time = new Date().toLocaleString("zh-CN", { hour12: false });
         arr.unshift(data);
         LS.set(key, arr);
+        if (window.XB_CLOUD && XB_CLOUD.isReady() && key === "applications") {
+          var slug2 = "recruit-" + Date.now();
+          var name2 = data.mName || data.sName || "匿名申请";
+          var title2 = name2 + (data.mGrade ? " · " + data.mGrade : "");
+          XB_CLOUD.saveContent("recruit", slug2, title2, data, 0).then(function (r) {
+            if (r && r.error) {} else { toast("已同步到编辑部后台"); }
+          });
+        }
         var ok = $(okSel);
         if (ok) {
           ok.style.display = "block";
@@ -2232,7 +2240,8 @@
       { t: "社刊档案", d: "《年轻的心》的期数、版块与印量", n: "第 36 期 · 11 版块", h: "sections.html" },
       { t: "标签索引", d: "按体裁、年份、活动、作者交叉检索", n: "40 个标签", h: "tags.html" },
       { t: "光华杯征文", d: "清明缅怀——传承的力量", n: "1027 篇 → 90 篇", h: "contest.html" },
-      { t: "投稿与指南", d: "怎么投稿、格式要求、往哪里交", n: "长期征稿", h: "guide.html" }
+      { t: "投稿与指南", d: "怎么投稿、格式要求、往哪里交", n: "长期征稿", h: "guide.html" },
+      { t: "加入我们", d: "网上招新，申请直达编辑部后台", n: "常年招新", h: "index.html#memForm" }
     ];
     box.innerHTML = cards.map(function (c) {
       return '<a class="navcard" href="' + c.h + '"><b>' + esc(c.t) + "</b><span>" + esc(c.d) + "</span><em>" + esc(c.n) + "</em></a>";

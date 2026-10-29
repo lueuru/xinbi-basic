@@ -87,6 +87,8 @@
       <button type="button" data-tab="events">活动</button>
       <button type="button" data-tab="members">社员</button>
       <button type="button" data-tab="acts">活动档案</button>
+      <button type="button" data-tab="recruits">招新申请</button>
+      <button type="button" data-tab="recruits">招新申请</button>
       <button type="button" data-tab="journal">社刊</button>
       <button type="button" data-tab="data">数据</button>
     </nav>
@@ -120,6 +122,16 @@
         <span class="ad-count" id="mbCount"></span>
       </div>
       <div id="mbRows"></div>
+    </section>
+
+    <section class="ad-panel" id="tab-recruits">
+      <div class="ad-toolbar">
+        <span class="ad-count" id="rcCount"></span>
+        <button class="btn btn-l sm" id="rcReload" type="button">刷新</button>
+        <button class="btn btn-l sm" id="rcExport" type="button">⬇ 导出 JSON</button>
+      </div>
+      <p class="ad-sub" style="margin:0 0 12px">网上招新提交的申请，来自全站「加入我们」表单。</p>
+      <div id="rcRows"></div>
     </section>
 
     <section class="ad-panel" id="tab-acts">

@@ -72,18 +72,27 @@ window.XB_ADMIN = (function () {
     }
     return XB_CLOUD.load().then(function () {
       return XB_CLOUD.session().then(function (s) {
-        if (s && s.user) { ADMIN.cloud = true; ADMIN.user = s.user; }
+        if (s && s.user) {
+          var allow = (window.XB_CONFIG && window.XB_CONFIG.adminEmails) || [];
+          var mail = (s.user.email || "").toLowerCase();
+          if (allow.length && mail && allow.indexOf(mail) < 0) {
+            ADMIN.denied = true;
+            XB_CLOUD.signOut();
+          } else { ADMIN.cloud = true; ADMIN.user = s.user; }
+        }
       });
     }).then(function () {
       return Promise.all([
         XB_CLOUD.fetchWorks(),
         XB_CLOUD.fetchContent("event"),
         XB_CLOUD.fetchContent("member"),
-        XB_CLOUD.fetchContent("issue")
+        XB_CLOUD.fetchContent("issue"),
+        XB_CLOUD.fetchContent("recruit")
       ]);
     }).then(function (res) {
       var corpus = localCorpus();
-      var works = res[0], events = res[1], members = res[2], issues = res[3];
+      var works = res[0], events = res[1], members = res[2], issues = res[3], recruits = res[4];
+      ADMIN.recruits = recruits || [];
       if (works && works.length) {
         ADMIN.works = works.map(function (row) {
           return {
@@ -493,7 +502,7 @@ window.XB_ADMIN = (function () {
     if (el) {
       el.textContent = ADMIN.cloud
         ? "云端作品库（已登录，编辑全局共享）"
-        : (ADMIN.source === "cloud" ? "云端作品库（只读，未登录）" : "本机草稿模式（未登录，编辑仅存本机）");
+        : (ADMIN.source === "cloud" ? "云端作品库（只读，未登录）" : "未登录");
     }
     var dot = $("#adDot");
     if (dot) dot.className = "ad-dot" + (ADMIN.cloud ? " on" : ADMIN.source === "cloud" ? " warn" : "");
@@ -506,7 +515,7 @@ window.XB_ADMIN = (function () {
             ADMIN.cloud = false;
             ADMIN.user = null;
             updateModeLabel();
-            toast("已退出登录，回到本机草稿模式");
+            toast("已退出登录");
           });
         } else {
           location.href = "login.html?next=admin.html";
@@ -521,6 +530,8 @@ window.XB_ADMIN = (function () {
     renderMembers();
     renderJournal();
     renderRecords();
+    renderActs();
+    renderRecruits();
   }
 
   function init() {
@@ -534,16 +545,11 @@ window.XB_ADMIN = (function () {
         app.style.display = "block";
         var u = ADMIN.user || {};
         $("#adUserName").textContent = u.email || u.name || "社员";
-      } else if (local) {
-        gate.style.display = "none";
-        app.style.display = "block";
-        $("#adUserName").textContent = local.name || "本地草稿";
-      } else if (ADMIN.source === "cloud") {
-        
-        gate.style.display = "none";
-        app.style.display = "block";
-        $("#adUserName").textContent = "访客（只读）";
       } else {
+        var lg = gate.querySelector("h2");
+        if (lg) lg.textContent = "后台需要登录";
+        var lp = gate.querySelector("p");
+        if (lp) lp.textContent = "访客无法进入后台。请使用管理员账号登录后继续。";
         gate.style.display = "grid";
         app.style.display = "none";
       }
@@ -626,6 +632,49 @@ window.XB_ADMIN = (function () {
     var b = new Blob([JSON.stringify({ activities: actData(), people: window.XB_PEOPLE || [] }, null, 2)], { type: "application/json" });
     var a = document.createElement("a");
     a.href = URL.createObjectURL(b); a.download = "xinbi-backup.json"; a.click();
+  });
+
+
+  /* ===== 招新申请 ===== */
+  function renderRecruits() {
+    var box = $("#rcRows"), cnt = $("#rcCount");
+    if (!box) return;
+    var list = ADMIN.recruits || [];
+    if (cnt) cnt.textContent = list.length + " 份";
+    if (!list.length) { box.innerHTML = '<p class="ad-sub">暂无申请。访客在「加入我们」提交后会出现在这里。</p>'; return; }
+    box.innerHTML = list.map(function (r) {
+      var b = r.body || {};
+      return '<div style="border:1px solid var(--line-2);border-radius:8px;padding:14px;margin-bottom:12px">' +
+        '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:baseline">' +
+        '<b>' + esc(b.mName || "匿名") + '</b><span style="color:var(--ink-3);font-size:.8rem">' + esc(b.mGrade || "") +
+        (b._time ? " · " + esc(b._time) : "") + (b.processed ? " · 已处理" : "") + "</span></div>" +
+        '<div style="font-size:.84rem;line-height:1.9;margin:6px 0">兴趣方向：' + esc(b.mInterest || "—") + "</div>" +
+        '<div style="font-size:.84rem;line-height:1.9">联系：' + esc(b.mEmail || "—") + (b.mPhone ? " · " + esc(b.mPhone) : "") + "</div>" +
+        '<div style="font-size:.84rem;line-height:1.9;color:var(--ink-2);margin-top:6px">' + esc(b.mMsg || "") + "</div>" +
+        (b.processed ? "" : '<button class="btn btn-l sm" data-slug="' + esc(r.slug) + '" style="margin-top:10px">标记已处理</button>') +
+        "</div>";
+    }).join("");
+    $$("#rcRows button[data-slug]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var slug = b.dataset.slug;
+        var rec = (ADMIN.recruits || []).filter(function (x) { return x.slug === slug; })[0];
+        if (!rec) return;
+        var body = rec.body || {}; body.processed = true;
+        XB_CLOUD.saveContent("recruit", slug, rec.title || (body.mName || "申请"), body, rec.sort || 0).then(function () { loadRecruits(); });
+      });
+    });
+  }
+  function loadRecruits() {
+    return XB_CLOUD.fetchContent("recruit").then(function (rows) {
+      ADMIN.recruits = rows || [];
+      renderRecruits();
+    });
+  }
+  on("#rcReload", "click", loadRecruits);
+  on("#rcExport", "click", function () {
+    var b = new Blob([JSON.stringify(ADMIN.recruits || [], null, 2)], { type: "application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(b); a.download = "recruits.json"; a.click();
   });
 
 })();
