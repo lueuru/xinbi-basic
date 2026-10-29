@@ -752,6 +752,14 @@ window.XB_ADMIN = (function () {
       });
     });
   }
+  on("#afCloud", "click", function () {
+    var list = window.XB_PEOPLE || [];
+    var sec = D.site.sections || {};
+    Promise.all([
+      XB_CLOUD.saveContent("people", "current", "人物志", list, 0),
+      XB_CLOUD.saveContent("sections", "current", "社刊版块", sec, 0)
+    ]).then(function () { toast("已保存到云端，全站刷新即生效"); }).catch(function () { toast("云端保存失败", "err"); });
+  });
   on("#afPeople", "click", function () {
     var list = LS.get("people", null) || window.XB_PEOPLE || [];
     dl("people.js", "window.XB_PEOPLE = " + JSON.stringify(list, null, 2) + ";\n");

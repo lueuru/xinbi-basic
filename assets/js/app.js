@@ -196,9 +196,19 @@
         XB_CLOUD.fetchWorks(),
         XB_CLOUD.fetchContent("event"),
         XB_CLOUD.fetchContent("member"),
-        XB_CLOUD.fetchContent("issue")
+        XB_CLOUD.fetchContent("issue"),
+        XB_CLOUD.fetchContent("people"),
+        XB_CLOUD.fetchContent("sections")
       ]).then(function (res) {
         var cloud = { works: res[0], events: res[1], members: res[2], issues: res[3] };
+        if (res[4] && res[4].length) {
+          var lp = res[4][res[4].length - 1];
+          if (lp && Array.isArray(lp.body) && lp.body.length) window.XB_PEOPLE = lp.body;
+        }
+        if (res[5] && res[5].length) {
+          var ls = res[5][res[5].length - 1];
+          if (ls && ls.body && ls.body.verified) D.site.sections = ls.body;
+        }
         if (!cloud.works && !cloud.events && !cloud.members && !cloud.issues) return null;
         applyCloudData(cloud);
         DATA.source = "cloud";
@@ -1349,6 +1359,10 @@
   }
 
   function initAboutPage() {
+    var rerender = function () { renderPeople(); renderBigTimeline(); var p2 = initAboutPage; };
+    if (window.XB_CLOUD && XB_CLOUD.isReady()) {
+      loadCloudData().then(function () { rerender(); });
+    }
     var lead = $("#aboutLead");
     if (lead) lead.textContent = D.site.intro;
     var cat = $("#catalogList");
